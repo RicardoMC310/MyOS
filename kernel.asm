@@ -24,7 +24,36 @@ ShowString:
     mov si, Welcome
     call PrintString
 
+    jmp halt
+
+halt:
+    call WaitKey
+
+    mov ah, 0x06
+    mov al, 0
+    mov bh, 0b0000_0000
+    mov ch, 0
+    mov cl, 0
+    mov dh, 25
+    mov dl, 80
+    int 0x10
+
     jmp END
+
+WaitKey:
+    .waiting:
+        in al, 0x64
+        test al, 0x01
+        jz .waiting
+
+    in al, 0x60
+    test al, 0x80
+    jnz .waiting
+
+    cmp al, 0x1C
+    jne WaitKey
+
+    ret
 
 ConfigSegment:
     mov ax, es
@@ -115,4 +144,4 @@ MoveCursor:
     ret
 
 END:
-    jmp $
+    int 0x19
