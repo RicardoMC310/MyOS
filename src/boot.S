@@ -6,6 +6,10 @@
 jmp entry
 
 entry:
+    ; salvando qual o tipo de disk esta sendo bootado
+    mov [type_drive], dl
+
+    ; inicializando ambiente
     cli
 
     xor ax, ax
@@ -16,158 +20,46 @@ entry:
 
     sti
 
-    mov ah, 0x00
-    mov al, 0x03
-    int 0x10
+    ; leitura de disco com LBA
+    mov ah, 0x42
+    mov dl, [type_drive]
+    mov si, dap
+    int 0x13
+    jc error_disk
 
-    call HelloWorld
-    call JumpLine
-    
-    call PointerString
-    call PrintString
+    ; pulando para o kernel
+    jmp 0x0800:0000
 
-    call PointerBuffer
-    call ReadString
-    call PointerStringBuffer
-    call PrintString
-    call JumpLine
-
-    jmp $
-
-HelloWorld:
-    mov ah, 0x0E
-    mov al, 'H'
-    int 0x10
-
-    mov ah, 0x0E
-    mov al, 'e'
-    int 0x10
-
-    mov ah, 0x0E
-    mov al, 'l'
-    int 0x10
-
-    mov ah, 0x0E
-    mov al, 'l'
-    int 0x10
-
-    mov ah, 0x0E
-    mov al, 'o'
-    int 0x10
-
-    mov ah, 0x0E
-    mov al, ','
-    int 0x10
-
-    mov ah, 0x0E
-    mov al, ' '
-    int 0x10
-
-    mov ah, 0x0E
-    mov al, 'W'
-    int 0x10
-
-    mov ah, 0x0E
-    mov al, 'o'
-    int 0x10
-
-    mov ah, 0x0E
-    mov al, 'r'
-    int 0x10
-
-    mov ah, 0x0E
-    mov al, 'l'
-    int 0x10
-
-    mov ah, 0x0E
-    mov al, 'd'
-    int 0x10
-
-    mov ah, 0x0E
-    mov al, '!'
-    int 0x10
-    
-    ret
-
-JumpLine:
-    mov ah, 0x0E
-    mov al, 0x0D
-    int 0x10
-
-    mov ah, 0x0E
-    mov al, 0x0A
-    int 0x10
-
-    ret
-
-PointerString:
-    mov si, msg1
-
-    ret
-
-PrintString:
+error_disk:
+    mov si, msg_error_disk
     mov ah, 0x0E
 
-    print:
-        lodsb ; incrementa si e carrega em al, com ctd incrementa, mas com std decrementa
-        test al, al ; and(&) bitwise
+    .print:
+        lodsb
+
+        test al, al
         jz .done
 
         int 0x10
-        jmp print
+        jmp .print
 
     .done:
-        ret
+        cli
+        hlt
 
-PointerBuffer:
-    mov di, buffer
+dap:
+    db 0x10 ; tamanho da estrutura
+    db 0x00 ; reservado, sempre deve ser 0
 
-    ret
+    dw KERNEL_SECTORS ; quantidade de setores (a quantidade vem direto do build)
 
-ReadString:
-    cld
-    mov cx, buffer_len - 1
+    dw 0x0000 ; offset do buffer
+    dw 0x0800 ; segmento do buffer
 
-.loop:
-    mov ah, 0x00
-    int 0x16
+    dq 1 ; ponto de partida, setor 1 ou o segundo setor
 
-    mov ah, 0x0E
-    int 0x10
-
-    cmp al, 0x0D
-    je .done
-
-    test cx, cx
-    jz .done
-
-    stosb
-    dec cx
-
-    jmp .loop
-
-.done:
-    mov ah, 0x0E
-
-    mov al, 0x0D
-    int 0x10
-
-    mov al, 0x0A
-    int 0x10
-
-    mov al, 0x00
-    stosb
-
-    ret
-
-PointerStringBuffer:
-    mov si, buffer
-
-    ret
-
-msg1 db "Hello, World!", 0x0D, 0x0A, 0x00
-buffer times 0x14 db 0x00
-buffer_len equ $ - buffer
+type_drive db 0x00
+msg_error_disk db "Erro ao ler o kernel do disco.", 0x0D, 0x0A, 0x00
 
 times 510 - ($ - $$) db 0x00
 dw 0xAA55
