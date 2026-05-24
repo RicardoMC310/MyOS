@@ -27,6 +27,15 @@ entry:
     int 0x13
     jc error_disk
 
+    ; esperando 1s para entrar no kernel
+    mov ah, 0x86
+
+    ; 0x000F4240 = 1000000 = 1s
+    mov cx, 0x000F
+    mov dx, 0X4240
+
+    int 0x15
+
     ; pulando para o kernel
     jmp 0x0800:0000
 
