@@ -1,9 +1,15 @@
+; ========================================================
+; MonnyOS - Details From Kernel Header
+; ========================================================
+; Create By: RicardoMC310
+; Version: 1.0.0
+; ========================================================
+
+%ifndef __KERNEL_DETAILS_INC__
+%define __KERNEL_DETAILS_INC__
+
 ; ________________________________________________________
 ; Directives and Inclusions ______________________________
-
-global monitor_init
-
-%include "monny/hardware/monitor.inc"
 
 ; End - Directives and Inclusions_________________________
 
@@ -12,12 +18,7 @@ global monitor_init
 ; ________________________________________________________
 ; Variables ______________________________________________
 
-monitor_back_width      dw 0x0000
-monitor_back_height     dw 0x0000
-monitor_back_color      db 0b0010_1110
-monitor_pagination      db 0x00
-monitor_cursor_x        dw 0x000F
-monitor_cursor_y        dw 0x000F
+detail_name_system    db "MonnyOS", 0x00
 
 ; End - Variables ________________________________________
 
@@ -26,19 +27,7 @@ monitor_cursor_y        dw 0x000F
 ; ________________________________________________________
 ; API Functions __________________________________________
 
-monitor_init:
-    mov ah, 0x00
-    mov al, 0x03
-    int 0x10
-
-    ret
-
 ; End - API Functions ____________________________________
 
 
-
-
-; ________________________________________________________
-; Internal Functions _____________________________________
-
-; End - Internal Functions _______________________________
+%endif

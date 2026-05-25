@@ -65,4 +65,7 @@ tmp/hardware/%.o: src/hardware/%.S
 	@mkdir -p $(dir $@)
 	nasm -f elf32 $< -o $@ -Iinclude -l $(patsubst %.o,%.lst,$@)
 
-.PHONY: run run-debug build hardware
+clean:
+	@rm -rf tmp debug dist
+
+.PHONY: run run-debug build hardware clean
