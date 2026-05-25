@@ -17,6 +17,7 @@ cursor_pos_y       db 0x00
 msg_welcome     db "Bem-Vindo(a) ao MonnyOS.", 0x00
 msg_description db "Espero que goste do meu sistema.", 0x00
 msg_start       db "Estamos configurando tudo para voce!", 0x00
+msg_restart     db "Reiniciando o MonnyOS...", 0x00
 
 ; +--------------------------------------+
 ; |         Tabela de cores              |
@@ -65,6 +66,8 @@ kernel_start:
 
     call TEXT.set_video_mode
 
+    call ClearString
+
     push 0b0010_0000
     push 25
     push 80
@@ -105,8 +108,10 @@ kernel_start:
     call PrintString
     call NewLine
 
-    cli 
-    hlt
+    mov ah, 0x00
+    int 0x16
+
+    jmp END
 
 config_segment:
     ; configurando segmentos de dados e extra
@@ -328,3 +333,69 @@ ScrollScreen:
     popa
 
     ret
+
+ClearString:
+    pusha
+
+    mov ah, 0x06
+    mov al, 0x19
+    mov bh, 0b0000_0000
+    mov ch, 0
+    mov cl, 0
+    mov dh, 0x19
+    mov dl, 0x50
+    int 0x10
+
+    popa
+    ret
+
+; +-------------------------------------+
+; |             Wait MS                 |
+; +-------------------------------------+
+; | 1º arg: Tempo em MS                 |
+; +-------------------------------------+
+WaitMS:
+    push bp
+    mov bp, sp
+
+    cli
+
+    pusha
+
+    mov ax, [bp + 4]
+
+    mov bx, 0x03E8
+    mul bx
+
+    mov cx, dx         ; parte alta
+    mov dx, ax         ; parte baixa
+
+    mov ah, 0x86
+    int 0x15
+
+    sti
+
+    popa
+    pop bp
+    ret 2
+
+END:
+    call ClearString
+
+    push 250
+    call WaitMS
+
+    mov byte[cursor_pos_x], 0x00
+    mov byte[cursor_pos_y], 0x00
+    call MoveCursor
+
+    push 0b0000_1111
+    push msg_restart
+    call PrintString ; print_string(msg_welcome, 0b0000_0111);
+    call NewLine
+
+    push 1000
+    call WaitMS
+    call ClearString
+
+    int 0x19

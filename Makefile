@@ -34,7 +34,7 @@ build:
 	ld -m elf_i386 -Ttext 0x7C00 --oformat elf32-i386 tmp/boot.o -o debug/boot.elf
 
 	@echo -e "[$(BLUE)$(BOLD)SYSTEM$(RESET)]: Criando imagem de disco"
-	dd if=/dev/zero of=dist/monny.img bs=512 count=2880
+	dd if=/dev/zero of=dist/monny.img bs=512 count=131072
 
 	@echo -e "[$(BLUE)$(BOLD)SYSTEM$(RESET)]: Gravando bootloader na imagem de disco"
 	dd if=tmp/boot.bin of=dist/monny.img bs=512 conv=notrunc
