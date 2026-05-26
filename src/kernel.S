@@ -71,8 +71,7 @@ kernel_start:
     call monitor_init
     call monitor_draw_background
 
-    push detail_name_system
-    call monitor_print_string
+    call monitor_effect
 
     mov ah, 0x00
     int 0x16

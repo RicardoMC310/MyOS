@@ -19,19 +19,21 @@ section .data
 ; ________________________________________________________
 ; Variables ______________________________________________
 
-monitor_back_width      dw 0x0000
-monitor_back_height     dw 0x0000
-monitor_back_color      db 0b0010_1110
-monitor_pagination      db 0x00
-monitor_cursor_x        dw 0x000F
-monitor_cursor_y        dw 0x000C
-monitor_text_cols       db 0x00
-monitor_text_rows       db 0x00
-monitor_cursor_text_x   db 0x01
-monitor_cursor_text_y   db 0x02
-monitor_state           db 0x00
-monitor_key             db 0x00
-monitor_count           dw 0x0000
+monitor_back_width              dw 0x0000
+monitor_back_height             dw 0x0000
+monitor_back_color              db 0x01
+monitor_pagination              db 0x00
+; monitor_cursor_x                dw 0x000F
+; monitor_cursor_y                dw 0x000C
+monitor_text_cols               db 0x00
+monitor_text_rows               db 0x00
+monitor_cursor_text_x           db 0x10
+monitor_cursor_text_y           db 0x0C
+monitor_state                   db 0x00
+monitor_count                   dw 0x0000
+monitor_effect_delay            dw 0x0078
+monitor_effect_init_color       db 0x28
+monitor_effect_end_color        db 0x2F
 
 ; End - Variables ________________________________________
 
@@ -83,7 +85,7 @@ monitor_print_string:
 
     mov ah, 0x09
     mov bh, [monitor_pagination]
-    mov bl, [monitor_back_color]
+    mov bx, [bp + 6]
     mov si, [bp + 4]
     mov cx, 0x0001
 
@@ -102,7 +104,7 @@ monitor_print_string:
 .done:
     popa
     pop bp
-    ret 2
+    ret 4
 
 monitor_move_cursor:
     push bp
@@ -160,6 +162,59 @@ monitor_move_shift_right_cursor:
 monitor_effect:
     pusha
 
+    mov bl, [monitor_effect_init_color]
+
+.start:
+    mov byte[monitor_cursor_text_x], 0x10
+    mov byte[monitor_cursor_text_y], 0x0C
+
+    mov dh, 0x0C
+    mov dl, 0x10
+    push dx
+    call monitor_move_cursor
+
+    push bx
+    push detail_name_system
+    call monitor_print_string
+
+    pusha 
+
+    mov bl, [monitor_state]
+    
+    cmp bl, 0x00
+    je .increment
+    jne .decrement
+
+.increment:
+    popa
+
+    inc bl
+
+    push word[monitor_effect_delay]
+    call wait_ms
+
+    cmp bl, [monitor_effect_end_color]
+    jne .start
+
+    mov byte[monitor_state], 0x01
+
+    jmp .start
+
+.decrement:
+    popa
+
+    dec bl
+
+    push word[monitor_effect_delay]
+    call wait_ms
+
+    cmp bl, [monitor_effect_init_color]
+    jne .start
+
+    mov byte[monitor_state], 0x00
+
+    jmp .start
+
     popa
 
     ret
@@ -195,5 +250,32 @@ VGA.set_video_mode:
     popa
 
     ret
+
+; Esperar X ms
+; Usa Bios Interrupt para esperar X ms
+wait_ms:
+    push bp
+    mov bp, sp
+
+    cli
+
+    pusha
+
+    mov ax, [bp + 4]
+
+    mov bx, 0x03E8
+    mul bx
+
+    mov cx, dx         ; parte alta
+    mov dx, ax         ; parte baixa
+
+    mov ah, 0x86
+    int 0x15
+
+    popa
+
+    sti
+    pop bp
+    ret 2
 
 ; End - Internal Functions _______________________________
