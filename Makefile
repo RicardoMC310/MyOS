@@ -32,7 +32,7 @@ build:
 	# (mantido como você já tinha, sem mudar arquitetura)
 
 	nasm -f elf32 src/kernel.S -o tmp/kernel.o -l tmp/kernel.lst -Iinclude
-	ld -m elf_i386 -Ttext 0x8000 --oformat elf32-i386 tmp/kernel.o $(HARDWARE_OBJ) -o debug/kernel.elf
+	ld -m elf_i386 -T linker.ld tmp/kernel.o $(HARDWARE_OBJ) -o debug/kernel.elf
 	objcopy -O binary debug/kernel.elf tmp/kernel.bin
 
 	@KERNEL_SIZE=$$(stat -c%s tmp/kernel.bin); \
@@ -42,7 +42,7 @@ build:
 	echo -e "[$(CYAN)$(BOLD)NASM$(RESET)]: Compilando bootloader"; \
 	nasm -DBIN -DKERNEL_SECTORS=$$KERNEL_SECTORS -f bin src/boot.S -o tmp/boot.bin -l tmp/boot.lst -Iinclude ; \
 	nasm -f elf32 -DKERNEL_SECTORS=$$KERNEL_SECTORS src/boot.S -o tmp/boot.o -g -F dwarf -Iinclude ; \
-	ld -m elf_i386 -Ttext 0x7C00 --oformat elf32-i386 tmp/boot.o -o debug/boot.elf
+	ld -m elf_i386 -T linker.ld tmp/boot.o -o debug/boot.elf
 
 	@echo -e "[$(BLUE)$(BOLD)SYSTEM$(RESET)]: Criando imagem de disco"
 	dd if=/dev/zero of=dist/monny.img bs=512 count=131072
