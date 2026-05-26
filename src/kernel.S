@@ -43,12 +43,15 @@ jmp kernel_start
 ; | 1111 | 0x0F | 15  | branco brilhante |
 ; +--------------------------------------+
 
+section .text
 
+global kernel_start
 
 ; ________________________________________________________
 ; Directives and Inclusions ______________________________
 
 %include "monny/hardware/monitor.inc"
+%include "monny/common/details.inc"
 
 ; End - Directives and Inclusions_________________________
 
@@ -66,6 +69,10 @@ kernel_start:
     ; call ClearScreen
 
     call monitor_init
+    call monitor_draw_background
+
+    push detail_name_system
+    call monitor_print_string
 
     mov ah, 0x00
     int 0x16
@@ -84,6 +91,8 @@ config_segment:
     mov ax, cs
     mov ds, ax
     mov es, ax
+    mov fs, ax
+    mov gs, ax
 
     ret
 
@@ -126,24 +135,6 @@ WaitMS:
     ret 2
 
 END:
-    ; call ClearScreen
-
-    push 250
-    call WaitMS
-
-    ; mov byte[cursor_pos_x], 0x00
-    ; mov byte[cursor_pos_y], 0x00
-    ; call MoveCursor
-
-    ; push 0b0000_1111
-    ; push msg_restart
-    ; call PrintString ; print_string(msg_welcome, 0b0000_0111);
-    ; call NewLine
-
-    push 1000
-    call WaitMS
-    ; call ClearScreen
-
     int 0x19
 
 ; End - Kernel Functions _________________________________
