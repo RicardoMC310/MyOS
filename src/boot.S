@@ -3,6 +3,8 @@
 [org 0x7C00]
 %endif
 
+section .text
+
 jmp entry
 
 entry:
