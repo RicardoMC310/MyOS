@@ -5,8 +5,6 @@
 
 jmp kernel_start
 
-section .text
-
 global kernel_start
 
 ; ________________________________________________________
@@ -15,9 +13,13 @@ global kernel_start
 %include "monny/hardware/monitor.inc"
 %include "monny/common/details.inc"
 
+section .data
+
+msg_reboot          db "Pressione qualquer tecla para resetar...", 0x00
+
 ; End - Directives and Inclusions_________________________
 
-
+section .text
 
 ; ________________________________________________________
 ; Start the System _______________________________________
@@ -34,6 +36,18 @@ kernel_start:
     call monitor_draw_background
 
     call monitor_effect
+
+    call monitor_draw_background
+
+    xor dx, dx
+    push dx
+    call monitor_move_cursor
+
+    push 0x20
+    push msg_reboot
+    call monitor_print_string
+
+    call clear_buffer_key
 
     mov ah, 0x00
     int 0x16
@@ -95,7 +109,30 @@ WaitMS:
     pop bp
     ret 2
 
+clear_buffer_key:
+    pusha
+
+.read:
+    mov ah, 0x01
+    int 0x16
+    jz .done
+
+    mov ah, 0x00
+    int 0x16
+    
+    jmp .read
+
+.done:
+    popa
+    ret
+
 END:
+    call monitor_draw_background
+
+    xor dx, dx
+    push dx
+    call monitor_move_cursor
+
     int 0x19
 
 ; End - Kernel Functions _________________________________

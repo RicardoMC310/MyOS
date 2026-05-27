@@ -112,6 +112,9 @@ monitor_move_cursor:
 
     pusha
 
+    mov byte[monitor_cursor_text_y], dh
+    mov byte[monitor_cursor_text_x], dl
+
     mov ah, 0x02
     mov bh, [monitor_pagination]
     mov dx, [bp + 4]
@@ -161,6 +164,7 @@ monitor_move_shift_right_cursor:
 
 monitor_effect:
     pusha
+    cli
 
     mov bl, [monitor_effect_init_color]
 
@@ -213,8 +217,14 @@ monitor_effect:
 
     mov byte[monitor_state], 0x00
 
-    jmp .start
+.check_count:
 
+    inc word[monitor_count]
+
+    cmp word[monitor_count], 0x000A
+    jbe .start
+
+    sti
     popa
 
     ret
